@@ -1,0 +1,53 @@
+:root {
+  --tg-bg: var(--tg-theme-bg-color, #ffffff);
+  --tg-text: var(--tg-theme-text-color, #222222);
+  --tg-hint: var(--tg-theme-hint-color, #8e8e93);
+  --tg-card: var(--tg-theme-secondary-bg-color, #f2f2f7);
+  --primary: #FF6B35;
+  --primary-text: #ffffff;
+}
+
+body {
+  margin: 0;
+  background: var(--tg-bg);
+  color: var(--tg-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.hint {
+  color: var(--tg-hint);
+  font-size: 13px;
+}
+
+.card {
+  background: var(--tg-card);
+  border-radius: 12px;
+}
+
+.field {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--tg-bg);
+  color: var(--tg-text);
+  font-size: 15px;
+}
+
+.btn-primary {
+  height: 48px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-text);
+  font-size: 15px;
+  font-weight: 600;
+}
