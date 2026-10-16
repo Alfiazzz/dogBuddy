@@ -138,6 +138,21 @@ main .btn-secondary {
   justify-content: center;
   width: 100%;
   text-decoration: none;
+  cursor: pointer;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+body.is-checking main {
+  visibility: hidden;
+}
+
+.dog-name {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .btn-primary:disabled,

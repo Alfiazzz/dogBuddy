@@ -10,59 +10,75 @@
 <body>
   <main class="mx-auto min-h-screen max-w-md px-4 py-6">
     <p id="tg-user" class="hint mb-2">Откройте приложение в Telegram</p>
-    <h1 class="mb-4">Регистрация пса</h1>
+    <p id="home-status" class="hint mb-4" aria-live="polite">Проверяем анкету...</p>
+    <button class="btn-secondary is-hidden mb-4" id="home-retry" type="button">Повторить</button>
 
-    <form id="dog-form" class="card flex flex-col gap-4 p-4">
-      <label class="flex flex-col gap-1">
-        <span>Имя</span>
-        <input class="field" type="text" name="name" required maxlength="100" placeholder="Шарик">
-      </label>
+    <section id="home-menu" class="is-hidden">
+      <h1 class="mb-2">Меню</h1>
+      <p id="home-dog" class="dog-name"></p>
+      <nav class="flex flex-col gap-2">
+        <a class="btn-primary no-underline" href="feed.html">🔍 Найти друзей</a>
+        <a class="btn-secondary no-underline" href="profile.html">🐕 Мой профиль</a>
+        <a class="btn-secondary no-underline" href="walks.html">📅 Мои прогулки</a>
+        <a class="btn-secondary no-underline" href="chats.html">💬 Чаты</a>
+        <a class="btn-secondary no-underline" href="settings.html">⚙️ Настройки</a>
+      </nav>
+    </section>
 
-      <label class="flex flex-col gap-1">
-        <span>Порода</span>
-        <input class="field" type="text" name="breed" maxlength="100" placeholder="Корги">
-      </label>
-
-      <label class="flex flex-col gap-1">
-        <span>Вес, кг</span>
-        <input class="field" type="number" name="weight_kg" required min="0.1" max="199" step="0.1" placeholder="12">
-      </label>
-
-      <label class="flex flex-col gap-1">
-        <span>Активность</span>
-        <select class="field" name="activity" required>
-          <option value="">Выберите от 1 до 5</option>
-          <option value="1">1 — очень спокойный</option>
-          <option value="2">2 — спокойный</option>
-          <option value="3">3 — средний</option>
-          <option value="4">4 — активный</option>
-          <option value="5">5 — очень активный</option>
-        </select>
-      </label>
-
-      <label class="flex items-center gap-2">
-        <input type="checkbox" name="vaccinated">
-        <span>Привит</span>
-      </label>
-
-      <input type="hidden" name="lat" id="lat">
-      <input type="hidden" name="lon" id="lon">
-      <button class="btn-secondary" id="locate-btn" type="button">📍 Определить моё местоположение</button>
-      <p id="coords-text" class="hint" aria-live="polite"></p>
-      <div id="manual-coords" class="manual-coords">
+    <section id="home-register" class="is-hidden">
+      <h1 class="mb-4">Регистрация пса</h1>
+      <form id="dog-form" class="card flex flex-col gap-4 p-4">
         <label class="flex flex-col gap-1">
-          <span>Широта (lat)</span>
-          <input class="field" id="lat-manual" type="number" step="0.0000001" min="-90" max="90" placeholder="55.7558">
+          <span>Имя</span>
+          <input class="field" type="text" name="name" required maxlength="100" placeholder="Шарик">
         </label>
-        <label class="flex flex-col gap-1">
-          <span>Долгота (lon)</span>
-          <input class="field" id="lon-manual" type="number" step="0.0000001" min="-180" max="180" placeholder="37.6173">
-        </label>
-      </div>
 
-      <button class="btn-primary" type="submit">Сохранить</button>
-      <p id="form-status" class="hint" aria-live="polite"></p>
-    </form>
+        <label class="flex flex-col gap-1">
+          <span>Порода</span>
+          <input class="field" type="text" name="breed" maxlength="100" placeholder="Корги">
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span>Вес, кг</span>
+          <input class="field" type="number" name="weight_kg" required min="0.1" max="199" step="0.1" placeholder="12">
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span>Активность</span>
+          <select class="field" name="activity" required>
+            <option value="">Выберите от 1 до 5</option>
+            <option value="1">1 — очень спокойный</option>
+            <option value="2">2 — спокойный</option>
+            <option value="3">3 — средний</option>
+            <option value="4">4 — активный</option>
+            <option value="5">5 — очень активный</option>
+          </select>
+        </label>
+
+        <label class="flex items-center gap-2">
+          <input type="checkbox" name="vaccinated">
+          <span>Привит</span>
+        </label>
+
+        <input type="hidden" name="lat" id="lat">
+        <input type="hidden" name="lon" id="lon">
+        <button class="btn-secondary" id="locate-btn" type="button">📍 Определить моё местоположение</button>
+        <p id="coords-text" class="hint" aria-live="polite"></p>
+        <div id="manual-coords" class="manual-coords">
+          <label class="flex flex-col gap-1">
+            <span>Широта (lat)</span>
+            <input class="field" id="lat-manual" type="number" step="0.0000001" min="-90" max="90" placeholder="55.7558">
+          </label>
+          <label class="flex flex-col gap-1">
+            <span>Долгота (lon)</span>
+            <input class="field" id="lon-manual" type="number" step="0.0000001" min="-180" max="180" placeholder="37.6173">
+          </label>
+        </div>
+
+        <button class="btn-primary" type="submit">Сохранить</button>
+        <p id="form-status" class="hint" aria-live="polite"></p>
+      </form>
+    </section>
   </main>
 
   <script src="app.js"></script>

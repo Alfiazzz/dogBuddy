@@ -12,6 +12,25 @@ document.addEventListener('DOMContentLoaded', function () {
     tg.expand();
   }
 
+  if (document.body.getAttribute('data-requires-dog') === '1') {
+    document.body.classList.add('is-checking');
+    fetchMyDog().then(function (data) {
+      if (data && data.ok === true && data.has_dog) {
+        if (data.dog_id) {
+          rememberDogId(data.dog_id);
+        }
+        document.body.classList.remove('is-checking');
+        return;
+      }
+      if (data && data.ok === true) {
+        window.location.replace('index.html');
+        return;
+      }
+      document.body.classList.remove('is-checking');
+      showGateError();
+    });
+  }
+
   if (greeting) {
     if (account.firstName) {
       greeting.textContent = 'Привет, ' + account.firstName;
@@ -67,6 +86,15 @@ document.addEventListener('DOMContentLoaded', function () {
   var reviewForm = document.getElementById('review-form');
   if (reviewForm) {
     initReview(reviewForm);
+  }
+
+  var homeMenu = document.getElementById('home-menu');
+  var homeRetry = document.getElementById('home-retry');
+  if (homeMenu) {
+    if (homeRetry) {
+      homeRetry.addEventListener('click', loadHome);
+    }
+    loadHome();
   }
 
   if (!form) {
@@ -126,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         showStatus(data.message || 'Собака добавлена', 'status-ok');
         window.setTimeout(function () {
-          window.location.href = 'profile.html?name=' + encodeURIComponent(payload.name);
+          window.location.href = 'index.html?name=' + encodeURIComponent(payload.name);
         }, 700);
       })
       .catch(function () {
@@ -1105,6 +1133,84 @@ document.addEventListener('DOMContentLoaded', function () {
         window.localStorage.setItem(key, value);
       }
     } catch (error) {}
+  }
+
+  function fetchMyDog() {
+    return fetch('https://pereskazka-ai.ru/dogbuddy/api/dogs.php?action=me&tg_id=' + encodeURIComponent(currentTgId()))
+      .then(readJson)
+      .catch(function () {
+        return null;
+      });
+  }
+
+  function loadHome() {
+    var menu = document.getElementById('home-menu');
+    var registerBlock = document.getElementById('home-register');
+    var homeStatus = document.getElementById('home-status');
+    var retry = document.getElementById('home-retry');
+    if (!menu || !registerBlock) {
+      return;
+    }
+
+    menu.classList.add('is-hidden');
+    registerBlock.classList.add('is-hidden');
+    if (retry) {
+      retry.classList.add('is-hidden');
+    }
+    if (homeStatus) {
+      homeStatus.textContent = 'Проверяем анкету...';
+      homeStatus.className = 'hint mb-4';
+    }
+
+    fetchMyDog().then(function (data) {
+      if (!data || data.ok !== true) {
+        if (homeStatus) {
+          homeStatus.textContent = 'Не удалось проверить анкету.';
+          homeStatus.className = 'hint mb-4 status-error';
+        }
+        if (retry) {
+          retry.classList.remove('is-hidden');
+        }
+        return;
+      }
+
+      if (data.has_dog) {
+        if (data.dog_id) {
+          rememberDogId(data.dog_id);
+        }
+        var dogLine = document.getElementById('home-dog');
+        if (dogLine) {
+          dogLine.textContent = data.name ? ('Ваша собака: ' + data.name) : 'Анкета сохранена';
+        }
+        var savedName = new URLSearchParams(window.location.search).get('name');
+        if (homeStatus) {
+          if (savedName) {
+            homeStatus.textContent = 'Собака «' + savedName + '» добавлена.';
+            homeStatus.className = 'hint mb-4 status-ok';
+          } else {
+            homeStatus.textContent = '';
+          }
+        }
+        menu.classList.remove('is-hidden');
+        return;
+      }
+
+      if (homeStatus) {
+        homeStatus.textContent = '';
+      }
+      registerBlock.classList.remove('is-hidden');
+    });
+  }
+
+  function showGateError() {
+    var main = document.querySelector('main');
+    if (!main) {
+      return;
+    }
+    var note = document.createElement('p');
+    note.className = 'hint status-error';
+    note.textContent = 'Не удалось проверить анкету. Откройте приложение ещё раз.';
+    main.insertBefore(note, main.firstChild);
   }
 
   function readJson(response) {

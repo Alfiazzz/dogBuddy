@@ -8,10 +8,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 header('Content-Type: application/json; charset=utf-8');
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'nearby') {
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && (($_GET['action'] ?? '') === 'nearby' || ($_GET['action'] ?? '') === 'me')) {
     require_once __DIR__ . '/config.php';
     require_once __DIR__ . '/user.php';
-    handleNearby($pdo);
+    if (($_GET['action'] ?? '') === 'me') {
+        handleMe($pdo);
+    } else {
+        handleNearby($pdo);
+    }
     exit;
 }
 
@@ -67,6 +71,10 @@ if ($lon === null) {
 $tgId = requestTgId($data);
 $firstName = trim((string) ($data['first_name'] ?? ''));
 
+if (findUserDogId($pdo, $tgId) > 0) {
+    respondError('Анкета собаки уже сохранена.', 409);
+}
+
 try {
     $pdo->beginTransaction();
     $owner = findOrCreateUser($pdo, $tgId, $firstName);
@@ -121,6 +129,38 @@ echo json_encode([
     'tg_id' => $tgId,
 ], JSON_UNESCAPED_UNICODE);
 exit;
+
+function handleMe($pdo) {
+    $tgId = requestTgId($_GET);
+    $stmt = $pdo->prepare(
+        'SELECT d.id, d.name
+         FROM dogs d
+         INNER JOIN users u ON u.id = d.user_id
+         WHERE u.tg_id = :tg_id
+         ORDER BY d.id ASC
+         LIMIT 1'
+    );
+    $stmt->execute(['tg_id' => $tgId]);
+    $row = $stmt->fetch();
+
+    if (!$row) {
+        echo json_encode([
+            'ok' => true,
+            'has_dog' => false,
+            'tg_id' => $tgId,
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    echo json_encode([
+        'ok' => true,
+        'has_dog' => true,
+        'dog_id' => (int) $row['id'],
+        'name' => (string) $row['name'],
+        'tg_id' => $tgId,
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 function handleNearby($pdo) {
     $lat = normalizeCoordinate($_GET['lat'] ?? null, -90, 90);
