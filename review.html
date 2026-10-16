@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DogBuddy — отзыв</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .review-back,
+    .review-submit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      text-decoration: none;
+    }
+
+    .review-label {
+      display: block;
+      margin: 16px 0 8px;
+    }
+
+    .star-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .star {
+      width: 48px;
+      height: 48px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      font-size: 28px;
+      line-height: 1;
+      opacity: 0.35;
+    }
+
+    .star.is-selected {
+      opacity: 1;
+    }
+
+    .review-text {
+      width: 100%;
+      min-height: 96px;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: var(--tg-card);
+      color: var(--tg-text);
+      font-size: 15px;
+      resize: vertical;
+    }
+
+    .review-status {
+      min-height: 18px;
+      margin: 12px 0 0;
+    }
+  </style>
+</head>
+<body>
+  <main class="mx-auto min-h-screen max-w-md px-4 py-6">
+    <a id="review-back" class="btn-secondary review-back" href="chat.html">← Назад в чат</a>
+    <h1 id="review-title" class="mb-4 mt-4">Оцените прогулку</h1>
+
+    <form id="review-form">
+      <p class="hint review-label">Оценка</p>
+      <div class="star-row" id="star-row">
+        <button class="star" type="button" data-rating="1" aria-label="1 звезда">⭐</button>
+        <button class="star" type="button" data-rating="2" aria-label="2 звезды">⭐</button>
+        <button class="star" type="button" data-rating="3" aria-label="3 звезды">⭐</button>
+        <button class="star" type="button" data-rating="4" aria-label="4 звезды">⭐</button>
+        <button class="star" type="button" data-rating="5" aria-label="5 звёзд">⭐</button>
+      </div>
+      <input id="review-rating" type="hidden" name="rating" value="">
+
+      <label class="hint review-label" for="review-text">Комментарий</label>
+      <textarea id="review-text" class="review-text" name="text" maxlength="1000" placeholder="Как прошла прогулка?"></textarea>
+
+      <p id="review-status" class="hint review-status"></p>
+      <button class="btn-primary review-submit" type="submit">Отправить отзыв</button>
+    </form>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

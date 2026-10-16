@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DogBuddy — прогулка</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .walk-back,
+    .walk-submit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      text-decoration: none;
+    }
+
+    .walk-label {
+      display: block;
+      margin: 16px 0 8px;
+    }
+
+    .walk-partner {
+      margin: 16px 0 0;
+      font-size: 15px;
+    }
+
+    .walk-status {
+      min-height: 18px;
+      margin: 12px 0 0;
+    }
+  </style>
+</head>
+<body>
+  <main class="mx-auto min-h-screen max-w-md px-4 py-6">
+    <a id="walk-back" class="btn-secondary walk-back" href="chat.html">← Назад в чат</a>
+    <h1 class="mb-2 mt-4">Предложить прогулку</h1>
+    <p id="walk-partner" class="walk-partner">С кем: …</p>
+
+    <form id="walk-form">
+      <label class="hint walk-label" for="walk-place">Место встречи</label>
+      <input id="walk-place" class="field" type="text" name="place" maxlength="255" placeholder="Например, парк" required>
+
+      <label class="hint walk-label" for="walk-time">Дата и время</label>
+      <input id="walk-time" class="field" type="datetime-local" name="scheduled_at" required>
+
+      <p id="walk-status" class="hint walk-status"></p>
+      <button class="btn-primary walk-submit" type="submit">Предложить прогулку</button>
+    </form>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

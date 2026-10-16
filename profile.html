@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DogBuddy — профиль</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <main class="mx-auto min-h-screen max-w-md px-4 py-6">
+    <h1 class="mb-4">Профиль собаки</h1>
+    <section class="card p-4">
+      <p id="profile-user" class="mb-2"></p>
+      <p id="saved-text" class="status-ok">Собака добавлена.</p>
+      <p class="hint mt-2">Анкета сохранена в базе.</p>
+    </section>
+  </main>
+
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js"></script>
+  <script>
+    var tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    var params = new URLSearchParams(window.location.search);
+    var dogName = params.get('name');
+    if (dogName) {
+      document.getElementById('saved-text').textContent = 'Собака «' + dogName + '» добавлена.';
+    }
+  </script>
+</body>
+</html>

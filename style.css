@@ -51,3 +51,36 @@ h1 {
   font-size: 15px;
   font-weight: 600;
 }
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.6;
+}
+
+.btn-secondary {
+  height: 48px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--primary);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.manual-coords {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.manual-coords.is-visible {
+  display: flex;
+}
+
+.status-ok {
+  color: #4CAF50;
+}
+
+.status-error {
+  color: #FF6B6B;
+}
