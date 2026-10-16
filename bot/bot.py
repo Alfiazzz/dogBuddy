@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-WEBAPP_URL = "https://noisy-pine-8712.alfiazin.workers.dev"
+WEBAPP_URL = "https://pereskazka-ai.ru/dogbuddy/index.html"
 
 dp = Dispatcher()
 
