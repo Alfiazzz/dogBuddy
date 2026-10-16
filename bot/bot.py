@@ -4,7 +4,7 @@ import os
 from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, MenuButtonWebApp, Message, WebAppInfo
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -81,12 +81,6 @@ async def main():
         raise SystemExit("Не задан BOT_TOKEN. Создайте файл bot/.env")
 
     bot = Bot(token=BOT_TOKEN)
-    await bot.set_chat_menu_button(
-        menu_button=MenuButtonWebApp(
-            text="Открыть DogBuddy",
-            web_app=WebAppInfo(url=WEBAPP_URL),
-        )
-    )
     await start_health_server()
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
