@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DogBuddy — о приложении</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body class="about-page">
+  <div id="network-banner" class="network-banner hidden">⚠️ Нет подключения к интернету</div>
+  <div id="network-indicator" class="network-indicator online"></div>
+  <main class="mx-auto min-h-screen max-w-md px-4 py-6">
+    <h1 class="about-title"><span class="about-title-icon" aria-hidden="true">🐕</span> О DogBuddy</h1>
+
+    <section class="about-card">
+      <h2>Что такое DogBuddy?</h2>
+      <p>DogBuddy — это приложение для владельцев собак, которые хотят найти друзей для прогулок. Найди собаку рядом, договорись о встрече и оставь отзыв после прогулки.</p>
+    </section>
+
+    <section class="about-card">
+      <h2>Как это работает?</h2>
+      <ol class="about-steps">
+        <li class="about-step"><span class="about-step-icon" aria-hidden="true">🐕</span><span>Зарегистрируй свою собаку</span></li>
+        <li class="about-step"><span class="about-step-icon" aria-hidden="true">🔍</span><span>Найди друзей рядом на карте</span></li>
+        <li class="about-step"><span class="about-step-icon" aria-hidden="true">📅</span><span>Договорись о прогулке и получи уведомление в Telegram</span></li>
+      </ol>
+    </section>
+
+    <section class="about-card">
+      <h2>Кто создал?</h2>
+      <p>DogBuddy создан с любовью к собакам. Если у вас есть вопросы или предложения, напишите нам.</p>
+    </section>
+
+    <section class="about-card">
+      <h2>Связаться с нами</h2>
+      <p class="about-contacts">
+        <a class="about-contact" href="mailto:pereskazka-ai@pereskazka-ai.ru">pereskazka-ai@pereskazka-ai.ru</a>
+        <a class="about-contact" href="tel:+79262305404">+79262305404</a>
+      </p>
+    </section>
+
+    <a class="btn-secondary no-underline" href="index.html">Назад в меню</a>
+    <nav class="legal-links" aria-label="Документы">
+      <a class="privacy-link" href="privacy.html">Политика конфиденциальности</a>
+      <a class="privacy-link" href="terms.html">Пользовательское соглашение</a>
+      <a class="privacy-link" href="consent.html">Согласие на обработку персональных данных</a>
+    </nav>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

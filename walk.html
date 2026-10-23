@@ -33,6 +33,8 @@
   </style>
 </head>
 <body data-requires-dog="1">
+  <div id="network-banner" class="network-banner hidden">⚠️ Нет подключения к интернету</div>
+  <div id="network-indicator" class="network-indicator online"></div>
   <main class="mx-auto min-h-screen max-w-md px-4 py-6">
     <a id="walk-back" class="btn-secondary walk-back" href="chat.html">← Назад в чат</a>
     <h1 class="mb-2 mt-4">Предложить прогулку</h1>
@@ -40,7 +42,7 @@
 
     <form id="walk-form">
       <label class="hint walk-label" for="walk-place">Место встречи</label>
-      <input id="walk-place" class="field" type="text" name="place" maxlength="255" placeholder="Например, парк" required>
+      <input id="walk-place" class="field" type="text" name="place" minlength="3" maxlength="100" placeholder="Например, парк" required>
 
       <label class="hint walk-label" for="walk-time">Дата и время</label>
       <input id="walk-time" class="field" type="datetime-local" name="scheduled_at" required>

@@ -5,15 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DogBuddy — чаты</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .chat-card {
+      position: relative;
+    }
+
+    .unread-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      min-width: 24px;
+      height: 24px;
+      padding: 0 6px;
+      box-sizing: border-box;
+      background: #FF4444;
+      color: #ffffff;
+      border-radius: 999px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      font-weight: bold;
+      line-height: 1;
+    }
+  </style>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body data-requires-dog="1">
+  <div id="network-banner" class="network-banner hidden">⚠️ Нет подключения к интернету</div>
+  <div id="network-indicator" class="network-indicator online"></div>
   <main class="mx-auto min-h-screen max-w-md px-4 py-6">
     <h1 class="mb-4">Чаты</h1>
-    <section class="card flex flex-col gap-4 p-4">
-      <p>Раздел в разработке</p>
-      <a class="btn-secondary no-underline" href="index.html">Назад в меню</a>
-    </section>
+    <div id="chats-list" class="list-stack"></div>
+    <a class="btn-secondary no-underline mt-4" href="index.html">Назад в меню</a>
   </main>
   <script src="app.js"></script>
 </body>

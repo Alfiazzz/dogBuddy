@@ -220,6 +220,8 @@
   </style>
 </head>
 <body class="chat-page" data-requires-dog="1">
+  <div id="network-banner" class="network-banner hidden">⚠️ Нет подключения к интернету</div>
+  <div id="network-indicator" class="network-indicator online"></div>
   <header class="chat-header">
     <a class="chat-back" href="feed.html">← Назад</a>
     <div class="chat-partner-wrap">
@@ -229,7 +231,7 @@
   </header>
 
   <div id="chat-walks" class="chat-walks" hidden></div>
-  <div id="chat-messages" class="chat-messages"></div>
+  <div id="messages-container" class="chat-messages"></div>
   <p id="chat-status" class="hint chat-status"></p>
   <a id="chat-walk-link" class="btn-secondary chat-walk-link" href="walk.html">Предложить прогулку</a>
 

@@ -8,12 +8,84 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body data-requires-dog="1">
+  <div id="network-banner" class="network-banner hidden">⚠️ Нет подключения к интернету</div>
+  <div id="network-indicator" class="network-indicator online"></div>
   <main class="mx-auto min-h-screen max-w-md px-4 py-6">
     <h1 class="mb-4">Профиль собаки</h1>
-    <section class="card p-4">
-      <p id="profile-user" class="mb-2"></p>
-      <p id="saved-text" class="status-ok">Собака добавлена.</p>
-      <p class="hint mt-2">Анкета сохранена в базе.</p>
+    <section id="profile-container" class="card p-4" data-keep="1">
+      <img id="profile-photo" class="profile-photo mb-4" alt="Фото собаки" src="https://via.placeholder.com/300x300?text=No+Photo">
+
+      <div id="profile-view" class="profile-view">
+        <p id="profile-user" class="mb-2"></p>
+        <div class="profile-facts">
+          <p id="profile-name">Имя: —</p>
+          <p id="profile-breed">Порода: —</p>
+          <p id="profile-weight">Вес: —</p>
+          <p id="profile-activity">Активность: —</p>
+          <p id="profile-vaccinated">Прививки: —</p>
+          <p id="profile-location">Место: —</p>
+        </div>
+        <p id="saved-text" class="status-ok"></p>
+        <button id="profile-edit" class="btn-primary profile-edit-btn" type="button">Редактировать профиль</button>
+      </div>
+
+      <form id="profile-form" class="profile-edit is-hidden">
+        <label class="flex flex-col gap-1">
+          <span>Имя</span>
+          <input class="field" type="text" name="name" required minlength="2" maxlength="30" placeholder="Шарик">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span>Порода</span>
+          <input class="field" type="text" name="breed" required minlength="2" maxlength="50" placeholder="Корги">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span>Вес, кг</span>
+          <input class="field" type="number" name="weight_kg" required min="0.5" max="150" step="0.1" placeholder="12">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span>Активность</span>
+          <select class="field" name="activity" required>
+            <option value="">Выберите от 1 до 5</option>
+            <option value="1">1 — очень спокойный</option>
+            <option value="2">2 — спокойный</option>
+            <option value="3">3 — средний</option>
+            <option value="4">4 — активный</option>
+            <option value="5">5 — очень активный</option>
+          </select>
+        </label>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" name="vaccinated">
+          <span>Привит</span>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span>Новое фото</span>
+          <span class="flex items-center gap-2">
+            <input id="photo-file" type="file" accept="image/*">
+            <img id="photo-preview" class="photo-preview is-hidden" alt="Превью нового фото">
+          </span>
+          <span class="hint">Если фото не менять, останется прежнее</span>
+        </label>
+        <input type="hidden" name="photo_url" id="photo-url" value="">
+        <input type="hidden" name="lat" id="lat">
+        <input type="hidden" name="lon" id="lon">
+        <button class="btn-secondary" id="locate-btn" type="button">Определить моё местоположение</button>
+        <p id="coords-text" class="hint" aria-live="polite"></p>
+        <div id="manual-coords" class="manual-coords">
+          <label class="flex flex-col gap-1">
+            <span>Широта (lat)</span>
+            <input class="field" id="lat-manual" type="number" step="0.0000001" min="-90" max="90" placeholder="55.7558">
+          </label>
+          <label class="flex flex-col gap-1">
+            <span>Долгота (lon)</span>
+            <input class="field" id="lon-manual" type="number" step="0.0000001" min="-180" max="180" placeholder="37.6173">
+          </label>
+        </div>
+        <div class="profile-actions">
+          <button id="profile-save" class="btn-primary profile-save-btn" type="submit">Сохранить изменения</button>
+          <button id="profile-cancel" class="btn-secondary profile-cancel-btn" type="button">Отмена</button>
+        </div>
+        <p id="form-status" class="hint" aria-live="polite"></p>
+      </form>
     </section>
   </main>
 

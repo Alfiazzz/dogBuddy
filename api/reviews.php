@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/user.php';
+require_once __DIR__ . '/validation.php';
 
 $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
@@ -21,20 +22,22 @@ if (!is_array($data)) {
     $data = $_POST;
 }
 
-$walkId = filter_var($data['walk_id'] ?? null, FILTER_VALIDATE_INT);
-$aboutDogId = filter_var($data['about_dog_id'] ?? null, FILTER_VALIDATE_INT);
-$rating = filter_var($data['rating'] ?? null, FILTER_VALIDATE_INT);
-$text = trim((string) ($data['text'] ?? ''));
-$textLength = function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : strlen($text);
+$myDogId = findUserDogId($pdo, requestTgId($data));
+$walkCheck = validateId($data['walk_id'] ?? null);
+validationStop($walkCheck);
+$aboutCheck = validateId($data['about_dog_id'] ?? null);
+validationStop($aboutCheck);
+$ratingCheck = validateRating($data['rating'] ?? null);
+validationStop($ratingCheck);
+$textCheck = validateReviewText($data['text'] ?? '');
+validationStop($textCheck);
+$walkId = $walkCheck['value'];
+$aboutDogId = $aboutCheck['value'];
+$rating = $ratingCheck['value'];
+$text = $textCheck['value'];
 
-if ($walkId === false || $walkId < 1 || $aboutDogId === false || $aboutDogId < 1) {
-    respondError('Укажите walk_id и about_dog_id.', 400);
-}
-if ($rating === false || $rating < 1 || $rating > 5) {
-    respondError('Оценка должна быть от 1 до 5.', 400);
-}
-if ($textLength > 1000) {
-    respondError('Отзыв длиннее 1000 символов.', 400);
+if ($myDogId < 1) {
+    respondError('Сначала заполните анкету собаки.', 404);
 }
 
 try {
@@ -44,10 +47,6 @@ try {
     }
     if ($aboutDogId !== (int) $walk['dog_a_id'] && $aboutDogId !== (int) $walk['dog_b_id']) {
         respondError('Эта собака не участвовала в прогулке.', 403);
-    }
-    $myDogId = findUserDogId($pdo, requestTgId($data));
-    if ($myDogId < 1) {
-        respondError('Сначала заполните анкету собаки.', 404);
     }
     if ($myDogId !== (int) $walk['dog_a_id'] && $myDogId !== (int) $walk['dog_b_id']) {
         respondError('Эта собака не участвовала в прогулке.', 403);
@@ -65,7 +64,7 @@ try {
         'walk_id' => $walkId,
         'about_dog_id' => $aboutDogId,
         'rating' => $rating,
-        'text' => $text === '' ? null : $text,
+        'text' => $text,
     ]);
     $reviewId = (int) $pdo->lastInsertId();
 
@@ -134,15 +133,12 @@ function respondError($message, $status) {
 
 function sendCorsHeaders() {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $allowedOrigin = is_string($origin) && preg_match(
-        '#^https://([a-z0-9-]+\.)+(pages\.dev|workers\.dev)$#i',
-        $origin
-    ) === 1;
-    if (!$allowedOrigin) {
+    header('X-Content-Type-Options: nosniff');
+    if ($origin !== 'https://pereskazka-ai.ru') {
         return;
     }
 
-    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Access-Control-Allow-Origin: https://pereskazka-ai.ru');
     header('Vary: Origin');
     header('Access-Control-Allow-Methods: POST, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type');

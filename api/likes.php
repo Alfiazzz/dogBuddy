@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/user.php';
+require_once __DIR__ . '/validation.php';
 
 $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
@@ -26,12 +27,11 @@ if (!is_array($data)) {
     $data = $_POST;
 }
 
-$toDogId = filter_var($data['to_dog_id'] ?? null, FILTER_VALIDATE_INT);
 $fromDogId = findUserDogId($pdo, requestTgId($data));
+$toCheck = validateId($data['to_dog_id'] ?? null);
+validationStop($toCheck);
+$toDogId = $toCheck['value'];
 
-if ($toDogId === false || $toDogId < 1) {
-    respondError('Укажите to_dog_id.', 400);
-}
 if ($fromDogId < 1) {
     respondError('Сначала заполните анкету собаки.', 404);
 }
@@ -74,6 +74,7 @@ try {
     $dogAId = min($fromDogId, $toDogId);
     $dogBId = max($fromDogId, $toDogId);
 
+    $matchCreated = false;
     $pdo->beginTransaction();
 
     $insertMatch = $pdo->prepare(
@@ -85,6 +86,7 @@ try {
             'dog_b_id' => $dogBId,
         ]);
         $matchId = (int) $pdo->lastInsertId();
+        $matchCreated = true;
     } catch (PDOException $e) {
         if ((string) $e->getCode() !== '23000') {
             throw $e;
@@ -110,6 +112,9 @@ try {
     }
 
     $pdo->commit();
+    if ($matchCreated) {
+        notifyMatchOwners($pdo, $dogAId, $dogBId, (int) $chatId);
+    }
 } catch (PDOException $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
@@ -131,6 +136,43 @@ echo json_encode([
 ], JSON_UNESCAPED_UNICODE);
 exit;
 
+function notifyMatchOwners($pdo, $dogAId, $dogBId, $chatId) {
+    try {
+        require_once __DIR__ . '/telegram.php';
+        $stmt = $pdo->prepare(
+            'SELECT d.name, u.tg_id
+             FROM dogs d
+             INNER JOIN users u ON u.id = d.user_id
+             WHERE d.id = :dog_a OR d.id = :dog_b
+             ORDER BY d.id ASC'
+        );
+        $stmt->execute([
+            'dog_a' => $dogAId,
+            'dog_b' => $dogBId,
+        ]);
+        $owners = $stmt->fetchAll();
+        if (count($owners) < 2) {
+            return;
+        }
+
+        $first = trim((string) $owners[0]['name']);
+        $second = trim((string) $owners[1]['name']);
+        if ($first === '') {
+            $first = 'Пёс';
+        }
+        if ($second === '') {
+            $second = 'Пёс';
+        }
+        $link = rtrim(WEB_APP_URL, '/') . '/chat.html?chat_id=' . (int) $chatId;
+        $text = '🎉 У вас новый мэтч! ' . $first . ' и ' . $second . ' понравились друг другу. Написать: ' . $link;
+        foreach ($owners as $owner) {
+            sendTelegramMessage($owner['tg_id'], $text);
+        }
+    } catch (Exception $e) {
+        error_log('DogBuddy match notify: ' . $e->getMessage());
+    }
+}
+
 function respondError($message, $status) {
     http_response_code($status);
     echo json_encode([
@@ -142,15 +184,12 @@ function respondError($message, $status) {
 
 function sendCorsHeaders() {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $allowedOrigin = is_string($origin) && preg_match(
-        '#^https://([a-z0-9-]+\.)+(pages\.dev|workers\.dev)$#i',
-        $origin
-    ) === 1;
-    if (!$allowedOrigin) {
+    header('X-Content-Type-Options: nosniff');
+    if ($origin !== 'https://pereskazka-ai.ru') {
         return;
     }
 
-    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Access-Control-Allow-Origin: https://pereskazka-ai.ru');
     header('Vary: Origin');
     header('Access-Control-Allow-Methods: POST, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type');

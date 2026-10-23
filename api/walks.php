@@ -10,11 +10,16 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/user.php';
+require_once __DIR__ . '/validation.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? (string) $_GET['action'] : '';
 
 try {
+    if ($method === 'GET' && $action === 'my_walks') {
+        handleMyWalks($pdo);
+    }
+
     if ($method === 'GET' && $action === 'list') {
         handleListWalks($pdo);
     }
@@ -39,19 +44,70 @@ try {
 
 respondError('Неизвестное действие.', 405);
 
+function handleMyWalks($pdo) {
+    $myDogId = findUserDogId($pdo, requestTgId($_GET));
+    if ($myDogId < 1) {
+        respondError('Сначала заполните анкету собаки.', 404);
+    }
+
+    $stmt = $pdo->prepare(
+        'SELECT w.id AS walk_id, w.status, w.place, w.scheduled_at, w.proposer_id,
+                CASE WHEN m.dog_a_id = :dog_name THEN b.name ELSE a.name END AS partner_name,
+                CASE WHEN m.dog_a_id = :dog_photo THEN b.photo_url ELSE a.photo_url END AS partner_photo
+         FROM walks w
+         INNER JOIN matches m ON m.id = w.match_id
+         INNER JOIN dogs a ON a.id = m.dog_a_id
+         INNER JOIN dogs b ON b.id = m.dog_b_id
+         WHERE m.dog_a_id = :dog_a OR m.dog_b_id = :dog_b
+         ORDER BY (w.scheduled_at < NOW()),
+                  CASE WHEN w.scheduled_at >= NOW() THEN w.scheduled_at END ASC,
+                  w.scheduled_at DESC'
+    );
+    $stmt->execute([
+        'dog_name' => $myDogId,
+        'dog_photo' => $myDogId,
+        'dog_a' => $myDogId,
+        'dog_b' => $myDogId,
+    ]);
+
+    $walks = [];
+    foreach ($stmt->fetchAll() as $row) {
+        $walks[] = [
+            'walk_id' => (int) $row['walk_id'],
+            'status' => (string) $row['status'],
+            'place' => (string) $row['place'],
+            'scheduled_at' => (string) $row['scheduled_at'],
+            'proposer_id' => (int) $row['proposer_id'],
+            'partner_name' => trim((string) $row['partner_name']) !== '' ? (string) $row['partner_name'] : 'Собеседник',
+            'partner_photo' => $row['partner_photo'] !== null && $row['partner_photo'] !== ''
+                ? (string) $row['partner_photo']
+                : 'https://via.placeholder.com/300x300?text=No+Photo',
+        ];
+    }
+
+    echo json_encode([
+        'ok' => true,
+        'my_dog_id' => $myDogId,
+        'walks' => $walks,
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 function handleListWalks($pdo) {
-    $chatId = filter_var($_GET['chat_id'] ?? null, FILTER_VALIDATE_INT);
-    if ($chatId === false || $chatId < 1) {
-        respondError('Укажите chat_id.', 400);
+    $myDogId = findUserDogId($pdo, requestTgId($_GET));
+    $chatCheck = validateId($_GET['chat_id'] ?? null);
+    validationStop($chatCheck);
+    $chatId = $chatCheck['value'];
+    if ($myDogId < 1) {
+        respondError('Сначала заполните анкету собаки.', 404);
     }
 
     $chat = findChatForWalk($pdo, $chatId);
     if (!$chat) {
         respondError('Чат не найден.', 404);
     }
-    $myDogId = findUserDogId($pdo, requestTgId($_GET));
-    if ($myDogId < 1) {
-        respondError('Сначала заполните анкету собаки.', 404);
+    if ($myDogId !== (int) $chat['dog_a_id'] && $myDogId !== (int) $chat['dog_b_id']) {
+        respondError('Эта собака не участвует в этом чате.', 403);
     }
 
     $stmt = $pdo->prepare(
@@ -80,28 +136,31 @@ function handleListWalks($pdo) {
 
 function handleCreateWalk($pdo) {
     $data = readBody();
-    $matchId = filter_var($data['match_id'] ?? null, FILTER_VALIDATE_INT);
     $proposerId = findUserDogId($pdo, requestTgId($data));
-    $place = trim((string) ($data['place'] ?? ''));
-    $placeLength = function_exists('mb_strlen') ? mb_strlen($place, 'UTF-8') : strlen($place);
-    $scheduledAt = normalizeDateTime($data['scheduled_at'] ?? '');
-    $lat = optionalCoordinate($data['lat'] ?? null, -90, 90);
-    $lon = optionalCoordinate($data['lon'] ?? null, -180, 180);
-
-    if ($matchId === false || $matchId < 1) {
-        respondError('Укажите match_id.', 400);
+    $matchCheck = validateId($data['match_id'] ?? null);
+    validationStop($matchCheck);
+    $placeCheck = validatePlace($data['place'] ?? '');
+    validationStop($placeCheck);
+    $timeCheck = validateScheduledAt($data['scheduled_at'] ?? '');
+    validationStop($timeCheck);
+    $matchId = $matchCheck['value'];
+    $place = $placeCheck['value'];
+    $scheduledAt = $timeCheck['value'];
+    $latRaw = $data['lat'] ?? null;
+    $lonRaw = $data['lon'] ?? null;
+    $lat = null;
+    $lon = null;
+    if (!($latRaw === null || $latRaw === '' || $lonRaw === null || $lonRaw === '')) {
+        $coordsCheck = validateCoords($latRaw, $lonRaw);
+        validationStop($coordsCheck);
+        $lat = $coordsCheck['value']['lat'];
+        $lon = $coordsCheck['value']['lon'];
+    } elseif (!($latRaw === null || $latRaw === '') || !($lonRaw === null || $lonRaw === '')) {
+        validationStop(validationError('Укажите и широту, и долготу места.'));
     }
+
     if ($proposerId < 1) {
         respondError('Сначала заполните анкету собаки.', 404);
-    }
-    if ($place === '' || $placeLength > 255) {
-        respondError('Укажите место встречи, не длиннее 255 символов.', 400);
-    }
-    if ($scheduledAt === null) {
-        respondError('Укажите дату и время прогулки.', 400);
-    }
-    if ($lat === false || $lon === false) {
-        respondError('Координаты места указаны неверно.', 400);
     }
 
     $match = findMatch($pdo, $matchId);
@@ -126,6 +185,8 @@ function handleCreateWalk($pdo) {
         'status' => 'proposed',
     ]);
 
+    notifyWalkProposed($pdo, $match, $proposerId, $place, $scheduledAt);
+
     echo json_encode([
         'ok' => true,
         'walk' => formatWalk(findWalk($pdo, (int) $pdo->lastInsertId())),
@@ -135,22 +196,23 @@ function handleCreateWalk($pdo) {
 
 function handleUpdateWalk($pdo) {
     $data = readBody();
-    $walkId = filter_var($data['walk_id'] ?? null, FILTER_VALIDATE_INT);
-    $status = isset($data['status']) ? (string) $data['status'] : '';
+    $myDogId = findUserDogId($pdo, requestTgId($data));
+    $walkCheck = validateId($data['walk_id'] ?? null);
+    validationStop($walkCheck);
+    $statusCheck = validateStatus(isset($data['status']) ? $data['status'] : '');
+    validationStop($statusCheck);
+    $walkId = $walkCheck['value'];
+    $status = $statusCheck['value'];
 
-    if ($walkId === false || $walkId < 1) {
-        respondError('Укажите walk_id.', 400);
+    if ($myDogId < 1) {
+        respondError('Сначала заполните анкету собаки.', 404);
     }
     if ($status !== 'confirmed' && $status !== 'cancelled') {
-        respondError('Статус может быть confirmed или cancelled.', 400);
+        respondError('Здесь можно только подтвердить или отменить прогулку.', 400);
     }
     $walk = findWalk($pdo, $walkId);
     if (!$walk) {
         respondError('Прогулка не найдена.', 404);
-    }
-    $myDogId = findUserDogId($pdo, requestTgId($data));
-    if ($myDogId < 1) {
-        respondError('Сначала заполните анкету собаки.', 404);
     }
     $match = findMatch($pdo, (int) $walk['match_id']);
     if (!$match || ($myDogId !== (int) $match['dog_a_id'] && $myDogId !== (int) $match['dog_b_id'])) {
@@ -163,11 +225,78 @@ function handleUpdateWalk($pdo) {
         'id' => $walkId,
     ]);
 
+    if ($status === 'confirmed' && (string) $walk['status'] !== 'confirmed') {
+        notifyWalkConfirmed($pdo, $match, $walk['place'], $walk['scheduled_at']);
+    }
+
     echo json_encode([
         'ok' => true,
         'walk' => formatWalk(findWalk($pdo, $walkId)),
     ], JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+function notifyWalkProposed($pdo, $match, $proposerId, $place, $scheduledAt) {
+    try {
+        require_once __DIR__ . '/telegram.php';
+        $owners = walkOwners($pdo, (int) $match['dog_a_id'], (int) $match['dog_b_id']);
+        $proposer = null;
+        $partner = null;
+        foreach ($owners as $owner) {
+            if ((int) $owner['id'] === (int) $proposerId) {
+                $proposer = $owner;
+            } else {
+                $partner = $owner;
+            }
+        }
+        if (!$partner) {
+            return;
+        }
+        $chatId = walkChatId($pdo, (int) $match['id']);
+        $name = trim((string) ($proposer['name'] ?? ''));
+        if ($name === '') {
+            $name = 'Собака';
+        }
+        $link = $chatId > 0 ? rtrim(WEB_APP_URL, '/') . '/chat.html?chat_id=' . $chatId : rtrim(WEB_APP_URL, '/') . '/index.html';
+        $text = '🐾 ' . $name . ' предлагает прогулку! Где: ' . $place . '. Когда: ' . $scheduledAt . '. Открой чат, чтобы подтвердить: ' . $link;
+        sendTelegramMessage($partner['tg_id'], $text);
+    } catch (Exception $e) {
+        error_log('DogBuddy walk propose notify: ' . $e->getMessage());
+    }
+}
+
+function notifyWalkConfirmed($pdo, $match, $place, $scheduledAt) {
+    try {
+        require_once __DIR__ . '/telegram.php';
+        $owners = walkOwners($pdo, (int) $match['dog_a_id'], (int) $match['dog_b_id']);
+        $text = '✅ Прогулка подтверждена: ' . trim((string) $place) . ', ' . trim((string) $scheduledAt);
+        foreach ($owners as $owner) {
+            sendTelegramMessage($owner['tg_id'], $text);
+        }
+    } catch (Exception $e) {
+        error_log('DogBuddy walk confirm notify: ' . $e->getMessage());
+    }
+}
+
+function walkOwners($pdo, $dogAId, $dogBId) {
+    $stmt = $pdo->prepare(
+        'SELECT d.id, d.name, u.tg_id
+         FROM dogs d
+         INNER JOIN users u ON u.id = d.user_id
+         WHERE d.id = :dog_a OR d.id = :dog_b'
+    );
+    $stmt->execute([
+        'dog_a' => $dogAId,
+        'dog_b' => $dogBId,
+    ]);
+    return $stmt->fetchAll();
+}
+
+function walkChatId($pdo, $matchId) {
+    $stmt = $pdo->prepare('SELECT id FROM chats WHERE match_id = :match_id');
+    $stmt->execute(['match_id' => $matchId]);
+    $chatId = $stmt->fetchColumn();
+    return $chatId ? (int) $chatId : 0;
 }
 
 function findChatForWalk($pdo, $chatId) {
@@ -226,35 +355,6 @@ function formatWalk($row) {
     ];
 }
 
-function normalizeDateTime($value) {
-    $value = trim(str_replace('T', ' ', (string) $value));
-    if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $value) === 1) {
-        $value .= ':00';
-    }
-    if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) !== 1) {
-        return null;
-    }
-    $date = DateTime::createFromFormat('Y-m-d H:i:s', $value);
-    if (!$date || $date->format('Y-m-d H:i:s') !== $value) {
-        return null;
-    }
-    return $value;
-}
-
-function optionalCoordinate($value, $min, $max) {
-    if ($value === null || $value === '') {
-        return null;
-    }
-    if (!is_numeric($value)) {
-        return false;
-    }
-    $number = (float) $value;
-    if ($number < $min || $number > $max) {
-        return false;
-    }
-    return $number;
-}
-
 function readBody() {
     $raw = file_get_contents('php://input');
     $data = json_decode($raw, true);
@@ -275,15 +375,12 @@ function respondError($message, $status) {
 
 function sendCorsHeaders() {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $allowedOrigin = is_string($origin) && preg_match(
-        '#^https://([a-z0-9-]+\.)+(pages\.dev|workers\.dev)$#i',
-        $origin
-    ) === 1;
-    if (!$allowedOrigin) {
+    header('X-Content-Type-Options: nosniff');
+    if ($origin !== 'https://pereskazka-ai.ru') {
         return;
     }
 
-    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Access-Control-Allow-Origin: https://pereskazka-ai.ru');
     header('Vary: Origin');
     header('Access-Control-Allow-Methods: GET, POST, PATCH, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type');

@@ -14,6 +14,7 @@
 
     .dog-photo,
     .dog-placeholder {
+      display: block;
       width: 100%;
       height: 220px;
       border-radius: 12px;
@@ -127,10 +128,12 @@
   </style>
 </head>
 <body data-requires-dog="1">
+  <div id="network-banner" class="network-banner hidden">⚠️ Нет подключения к интернету</div>
+  <div id="network-indicator" class="network-indicator online"></div>
   <main class="mx-auto min-h-screen max-w-md px-4 py-6">
     <a class="btn-secondary mb-4 flex items-center justify-center no-underline" href="profile.html">Назад в профиль</a>
     <h1 class="mb-4">Собаки рядом</h1>
-    <div id="dog-feed" class="flex flex-col gap-4"></div>
+    <div id="feed-container" class="flex flex-col gap-4"></div>
   </main>
 
   <div id="match-modal" class="match-modal">
